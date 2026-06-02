@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   Pressable,
@@ -9,20 +10,31 @@ import {
 import Deck from './src/deck/Deck';
 import { useMockPlayback } from './src/playback/useMockPlayback';
 import { DeckSpec } from './src/reel-physics/reelPhysics';
+import { useTape } from './src/tape-curation/useTape';
+import { totalDuration } from './src/tape-curation/tape';
+import TapeEditor from './src/tape-curation/TapeEditor';
+import { MOCK_CATALOG, fmtDuration } from './src/catalog/mockCatalog';
 
-// Deck geometry — hub vs. full-reel radii. These are pure feel knobs: a smaller
-// hub makes the reels swing through a wider size range as they wind.
+// Deck geometry — hub vs. full-reel radii. Pure feel knobs.
 const SPEC: DeckSpec = { hubRadius: 72, maxRadius: 150 };
+
+// Map the tape's real runtime onto a watchable preview timescale (seconds).
+const previewSeconds = (totalSec: number): number =>
+  totalSec === 0 ? 30 : Math.max(10, Math.min(90, totalSec / 8));
 
 export default function App() {
   const { width } = useWindowDimensions();
-  const { state, toggle } = useMockPlayback(SPEC, { durationSeconds: 30 });
+  const { tape, add, remove, full } = useTape();
+  const { state, toggle } = useMockPlayback(SPEC, {
+    durationSeconds: previewSeconds(totalDuration(tape)),
+  });
+  const [editing, setEditing] = useState(false);
 
-  // Constrain the deck to a phone-ish column even in a wide browser window.
   const deckWidth = Math.min(width - 32, 460);
+  const loaded = tape.tracks.length > 0;
 
   return (
-    <Pressable style={styles.screen} onPress={toggle}>
+    <View style={styles.screen}>
       <View style={styles.frame}>
         <View style={styles.headerRow}>
           <Text style={styles.deckId}>RTT-01</Text>
@@ -41,18 +53,42 @@ export default function App() {
           </View>
         </View>
 
-        <Deck
-          width={deckWidth}
-          spec={SPEC}
-          progress={state.progress}
-          supplyAngle={state.supplyAngle}
-          takeupAngle={state.takeupAngle}
-        />
+        {/* Deck — tap to pause/play */}
+        <Pressable onPress={toggle}>
+          <Deck
+            width={deckWidth}
+            spec={SPEC}
+            progress={state.progress}
+            supplyAngle={state.supplyAngle}
+            takeupAngle={state.takeupAngle}
+          />
+        </Pressable>
 
-        <Text style={styles.hint}>tap anywhere to {state.isPlaying ? 'pause' : 'play'}</Text>
+        {/* Tape status + add songs */}
+        <View style={styles.tapeRow}>
+          <Text style={styles.tapeStatus}>
+            {loaded
+              ? `${tape.tracks.length}/20 · ${fmtDuration(totalDuration(tape))}`
+              : 'no tape loaded'}
+          </Text>
+          <Pressable style={styles.addBtn} onPress={() => setEditing(true)}>
+            <Text style={styles.addBtnText}>{loaded ? 'edit tape' : '+ add songs'}</Text>
+          </Pressable>
+        </View>
       </View>
+
+      <TapeEditor
+        visible={editing}
+        onClose={() => setEditing(false)}
+        tape={tape}
+        catalog={MOCK_CATALOG}
+        full={full}
+        onAdd={add}
+        onRemove={remove}
+      />
+
       <StatusBar style="light" />
-    </Pressable>
+    </View>
   );
 }
 
@@ -63,45 +99,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  frame: {
-    width: '100%',
-    maxWidth: 480,
-    paddingHorizontal: 16,
-  },
+  frame: { width: '100%', maxWidth: 480, paddingHorizontal: 16 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 28,
   },
-  deckId: {
-    color: '#D8D8D8',
-    fontSize: 18,
-    letterSpacing: 2,
-    fontWeight: '600',
-  },
-  state: {
-    color: '#888',
-    fontSize: 12,
-    letterSpacing: 1,
-  },
+  deckId: { color: '#D8D8D8', fontSize: 18, letterSpacing: 2, fontWeight: '600' },
+  state: { color: '#888', fontSize: 12, letterSpacing: 1 },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 4,
   },
-  title: {
-    color: '#F2F2F2',
-    fontSize: 34,
-    lineHeight: 36,
-    fontWeight: '300',
-    letterSpacing: 1,
-  },
-  pills: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  title: { color: '#F2F2F2', fontSize: 34, lineHeight: 36, fontWeight: '300', letterSpacing: 1 },
+  pills: { flexDirection: 'row', gap: 8 },
   pill: {
     borderColor: '#3A3A3A',
     borderWidth: 1,
@@ -109,15 +123,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 5,
   },
-  pillText: {
-    color: '#CFCFCF',
-    fontSize: 13,
-  },
-  hint: {
-    color: '#555',
-    fontSize: 12,
-    textAlign: 'center',
+  pillText: { color: '#CFCFCF', fontSize: 13 },
+  tapeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 18,
-    letterSpacing: 1,
   },
+  tapeStatus: { color: '#777', fontSize: 13, letterSpacing: 1 },
+  addBtn: {
+    borderColor: '#E9E64B',
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+  },
+  addBtnText: { color: '#E9E64B', fontSize: 14, letterSpacing: 1 },
 });
