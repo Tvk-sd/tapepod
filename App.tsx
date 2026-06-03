@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   Pressable,
@@ -8,30 +8,47 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Deck from './src/deck/Deck';
-import { useMockPlayback } from './src/playback/useMockPlayback';
 import { DeckSpec } from './src/reel-physics/reelPhysics';
+import { useNowPlaying } from './src/now-playing/useNowPlaying';
+import { createMockSource } from './src/now-playing/mockSource';
+import { createSpotifySource } from './src/now-playing/spotifySource';
+import { useSpotifyAuth } from './src/spotify/useSpotifyAuth';
 import { useTape } from './src/tape-curation/useTape';
 import { totalDuration } from './src/tape-curation/tape';
 import TapeEditor from './src/tape-curation/TapeEditor';
 import { MOCK_CATALOG, fmtDuration } from './src/catalog/mockCatalog';
 
-// Deck geometry — hub vs. full-reel radii. Pure feel knobs.
 const SPEC: DeckSpec = { hubRadius: 72, maxRadius: 150 };
 
-// Map the tape's real runtime onto a watchable preview timescale (seconds).
 const previewSeconds = (totalSec: number): number =>
   totalSec === 0 ? 30 : Math.max(10, Math.min(90, totalSec / 8));
 
 export default function App() {
   const { width } = useWindowDimensions();
   const { tape, add, remove, full } = useTape();
-  const { state, toggle } = useMockPlayback(SPEC, {
-    durationSeconds: previewSeconds(totalDuration(tape)),
-  });
+  const auth = useSpotifyAuth();
   const [editing, setEditing] = useState(false);
+
+  // Source switch: real Spotify when connected, mock otherwise.
+  const source = useMemo(
+    () =>
+      auth.isAuthed
+        ? createSpotifySource(auth.getAccessToken)
+        : createMockSource(previewSeconds(totalDuration(tape))),
+    [auth.isAuthed, auth.getAccessToken, tape],
+  );
+  const { state, toggle } = useNowPlaying(source, SPEC, 2000);
 
   const deckWidth = Math.min(width - 32, 460);
   const loaded = tape.tracks.length > 0;
+
+  const statusText = auth.isAuthed
+    ? state.trackTitle
+      ? `${state.trackTitle} — ${state.trackArtist}`
+      : 'play a song in Spotify'
+    : loaded
+    ? `${tape.tracks.length}/20 · ${fmtDuration(totalDuration(tape))}`
+    : 'no tape loaded';
 
   return (
     <View style={styles.screen}>
@@ -53,7 +70,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* Deck — tap to pause/play */}
         <Pressable onPress={toggle}>
           <Deck
             width={deckWidth}
@@ -64,13 +80,22 @@ export default function App() {
           />
         </Pressable>
 
-        {/* Tape status + add songs */}
         <View style={styles.tapeRow}>
-          <Text style={styles.tapeStatus}>
-            {loaded
-              ? `${tape.tracks.length}/20 · ${fmtDuration(totalDuration(tape))}`
-              : 'no tape loaded'}
+          <Text style={styles.tapeStatus} numberOfLines={1}>
+            {statusText}
           </Text>
+        </View>
+
+        <View style={styles.buttonsRow}>
+          {auth.isAuthed ? (
+            <Pressable style={styles.ghostBtn} onPress={auth.logout}>
+              <Text style={styles.ghostBtnText}>spotify ✓</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={styles.spotifyBtn} onPress={auth.login} disabled={!auth.canPrompt}>
+              <Text style={styles.spotifyBtnText}>connect spotify</Text>
+            </Pressable>
+          )}
           <Pressable style={styles.addBtn} onPress={() => setEditing(true)}>
             <Text style={styles.addBtnText}>{loaded ? 'edit tape' : '+ add songs'}</Text>
           </Pressable>
@@ -93,12 +118,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#0B0B0B',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  screen: { flex: 1, backgroundColor: '#0B0B0B', alignItems: 'center', justifyContent: 'center' },
   frame: { width: '100%', maxWidth: 480, paddingHorizontal: 16 },
   headerRow: {
     flexDirection: 'row',
@@ -124,13 +144,24 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   pillText: { color: '#CFCFCF', fontSize: 13 },
-  tapeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
+  tapeRow: { marginTop: 18 },
   tapeStatus: { color: '#777', fontSize: 13, letterSpacing: 1 },
+  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
+  spotifyBtn: {
+    backgroundColor: '#1DB954',
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+  },
+  spotifyBtnText: { color: '#0B0B0B', fontSize: 14, letterSpacing: 1, fontWeight: '600' },
+  ghostBtn: {
+    borderColor: '#1DB954',
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+  },
+  ghostBtnText: { color: '#1DB954', fontSize: 14, letterSpacing: 1 },
   addBtn: {
     borderColor: '#E9E64B',
     borderWidth: 1,
