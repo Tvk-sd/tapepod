@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,6 +14,7 @@ import { useNowPlaying } from './src/now-playing/useNowPlaying';
 import { createMockSource } from './src/now-playing/mockSource';
 import { createSpotifySource } from './src/now-playing/spotifySource';
 import { useSpotifyAuth } from './src/spotify/useSpotifyAuth';
+import { useWebPlayback } from './src/spotify/useWebPlayback';
 import { useTape } from './src/tape-curation/useTape';
 import { totalDuration } from './src/tape-curation/tape';
 import TapeEditor from './src/tape-curation/TapeEditor';
@@ -27,17 +29,21 @@ export default function App() {
   const { width } = useWindowDimensions();
   const { tape, add, remove, full } = useTape();
   const auth = useSpotifyAuth();
+  const web = Platform.OS === 'web';
+  const wp = useWebPlayback(auth.isAuthed, auth.getAccessToken);
   const [editing, setEditing] = useState(false);
 
-  // Source switch: real Spotify when connected, mock otherwise.
-  const source = useMemo(
-    () =>
-      auth.isAuthed
-        ? createSpotifySource(auth.getAccessToken)
-        : createMockSource(previewSeconds(totalDuration(tape))),
-    [auth.isAuthed, auth.getAccessToken, tape],
-  );
-  const { state, toggle } = useNowPlaying(source, SPEC, 2000);
+  // Source switch: SDK player (control, web) > Spotify mirror (read) > mock.
+  const source = useMemo(() => {
+    if (auth.isAuthed && web && wp.ready) return wp.source;
+    if (auth.isAuthed) return createSpotifySource(auth.getAccessToken);
+    return createMockSource(previewSeconds(totalDuration(tape)));
+  }, [auth.isAuthed, web, wp.ready, wp.source, auth.getAccessToken, tape]);
+
+  const { state, toggle } = useNowPlaying(source, SPEC, wp.ready ? 400 : 2000);
+
+  // Deck tap controls Spotify when we're the player, else just freezes the mock.
+  const onDeckPress = () => (wp.ready ? wp.controls.toggle() : toggle());
 
   const deckWidth = Math.min(width - 32, 460);
   const loaded = tape.tracks.length > 0;
@@ -45,7 +51,9 @@ export default function App() {
   const statusText = auth.isAuthed
     ? state.trackTitle
       ? `${state.trackTitle} — ${state.trackArtist}`
-      : 'play a song in Spotify'
+      : wp.ready
+      ? 'press ▶ — have a song queued in Spotify'
+      : 'connecting player…'
     : loaded
     ? `${tape.tracks.length}/20 · ${fmtDuration(totalDuration(tape))}`
     : 'no tape loaded';
@@ -70,7 +78,7 @@ export default function App() {
           </View>
         </View>
 
-        <Pressable onPress={toggle}>
+        <Pressable onPress={onDeckPress}>
           <Deck
             width={deckWidth}
             spec={SPEC}
@@ -79,6 +87,20 @@ export default function App() {
             takeupAngle={state.takeupAngle}
           />
         </Pressable>
+
+        {wp.ready && (
+          <View style={styles.transport}>
+            <Pressable style={styles.tBtn} onPress={wp.controls.prev}>
+              <Text style={styles.tBtnText}>⏮</Text>
+            </Pressable>
+            <Pressable style={styles.tBtnPlay} onPress={wp.controls.toggle}>
+              <Text style={styles.tBtnPlayText}>{state.isPlaying ? '❚❚' : '▶'}</Text>
+            </Pressable>
+            <Pressable style={styles.tBtn} onPress={wp.controls.next}>
+              <Text style={styles.tBtnText}>⏭</Text>
+            </Pressable>
+          </View>
+        )}
 
         <View style={styles.tapeRow}>
           <Text style={styles.tapeStatus} numberOfLines={1}>
@@ -144,6 +166,25 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   pillText: { color: '#CFCFCF', fontSize: 13 },
+  transport: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 22,
+    marginTop: 18,
+  },
+  tBtn: { paddingHorizontal: 10, paddingVertical: 6 },
+  tBtnText: { color: '#CFCFCF', fontSize: 20 },
+  tBtnPlay: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderColor: '#E9E64B',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tBtnPlayText: { color: '#E9E64B', fontSize: 18 },
   tapeRow: { marginTop: 18 },
   tapeStatus: { color: '#777', fontSize: 13, letterSpacing: 1 },
   buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },

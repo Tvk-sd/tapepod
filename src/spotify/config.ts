@@ -10,9 +10,17 @@ export const SPOTIFY_DISCOVERY = {
   tokenEndpoint: 'https://accounts.spotify.com/api/token',
 };
 
-// Phase 1 = mirror (read playback). Control scope (user-modify-playback-state)
-// is added in Phase 3.
-export const SPOTIFY_SCOPES = ['user-read-playback-state', 'user-read-currently-playing'];
+// Read (mirror) + control (Web Playback SDK). `streaming` + user-read-email/private
+// are required by the Web Playback SDK; user-modify-playback-state lets us transfer
+// playback to the Tapepod device and skip tracks.
+export const SPOTIFY_SCOPES = [
+  'user-read-playback-state',
+  'user-read-currently-playing',
+  'user-modify-playback-state',
+  'streaming',
+  'user-read-email',
+  'user-read-private',
+];
 
 // Web: the loopback IP exactly — Spotify rejects `localhost` (see ADR-0002).
 // Open the app at http://127.0.0.1:8081 for the redirect to match.

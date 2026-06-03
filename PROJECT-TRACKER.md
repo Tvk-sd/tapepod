@@ -48,13 +48,13 @@ npx expo start --web      # then open http://localhost:8081
 - Tune the feel knobs by eye (SPEC radii, SPIN_RATE, duration) — see below.
 - Wire jest-expo so the assertions run as `npm test` (currently `npx tsx`).
 - Album label / artwork on the tape (PRD 19).
-- **Spotify Phase 1 (mirror) — BUILT, awaiting live test.** PKCE auth +
-  SpotifyNowPlaying source drive the reels. Mock is fallback when not connected.
-  `src/spotify/`, `src/now-playing/`. Design: `docs/design/spotify-integration.md`,
-  `docs/adr/0002`. Client ID in `.env` (gitignored). Premium confirmed.
-- Spotify Phase 2: SpotifyCatalog (search + load real albums into tapes).
-- Spotify Phase 3 (Premium): playback control — play the loaded tape.
-- Real Album Catalog behind the mock catalog's interface.
+- **Spotify Phase 1 (mirror) — DONE, live-tested.** PKCE auth + mirror drives reels.
+- **Spotify Phase 3 control (Web Playback SDK) — DONE, live-tested.** Tapepod is a
+  Spotify device in the browser; play/pause/skip from the app, reels event-driven
+  (no delay). `src/spotify/useWebPlayback.ts`. Web-only (iOS = native App Remote later).
+- **Spotify Phase 2 — NEXT:** SpotifyCatalog (search + load real albums) so the
+  *curated tape* plays real Spotify tracks. Mock catalog has fake ids today.
+- iOS playback: native App Remote SDK (separate from web SDK).
 - iOS simulator pass (the SVG + RN UI should port unchanged).
 - Polish: "done" button right-edge padding in TapeEditor at narrow widths.
 
