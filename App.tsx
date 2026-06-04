@@ -18,7 +18,7 @@ import { useWebPlayback } from './src/spotify/useWebPlayback';
 import { useTape } from './src/tape-curation/useTape';
 import { totalDuration } from './src/tape-curation/tape';
 import TapeEditor from './src/tape-curation/TapeEditor';
-import { MOCK_CATALOG, fmtDuration } from './src/catalog/mockCatalog';
+import { MOCK_CATALOG } from './src/catalog/mockCatalog';
 
 const SPEC: DeckSpec = { hubRadius: 72, maxRadius: 150 };
 
@@ -42,43 +42,36 @@ export default function App() {
 
   const { state, toggle } = useNowPlaying(source, SPEC, wp.ready ? 400 : 2000);
 
-  // Deck tap controls Spotify when we're the player, else just freezes the mock.
-  const onDeckPress = () => (wp.ready ? wp.controls.toggle() : toggle());
+  const onTogglePlay = () => (wp.ready ? wp.controls.toggle() : toggle());
 
   const deckWidth = Math.min(width - 32, 460);
   const loaded = tape.tracks.length > 0;
 
-  const statusText = auth.isAuthed
-    ? state.trackTitle
-      ? `${state.trackTitle} — ${state.trackArtist}`
-      : wp.ready
-      ? 'press ▶ — have a song queued in Spotify'
-      : 'connecting player…'
-    : loaded
-    ? `${tape.tracks.length}/20 · ${fmtDuration(totalDuration(tape))}`
-    : 'no tape loaded';
+  const nowPlayingLabel =
+    state.trackArtist && state.trackTitle
+      ? `${state.trackArtist} - ${state.trackTitle}`
+      : loaded
+      ? `${tape.tracks[0].artist} - ${tape.tracks[0].title}`
+      : '—';
 
   return (
     <View style={styles.screen}>
       <View style={styles.frame}>
         <View style={styles.headerRow}>
-          <Text style={styles.deckId}>RTT-01</Text>
-          <Text style={styles.state}>{state.isPlaying ? '▶ PLAY' : '❚❚ PAUSE'}</Text>
+          <Text style={styles.deckId} numberOfLines={1}>
+            {nowPlayingLabel}
+          </Text>
+          <Pressable
+            onPress={onTogglePlay}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={state.isPlaying ? 'Pause' : 'Play'}
+          >
+            <Text style={styles.state}>{state.isPlaying ? '▶ PLAY' : '❚❚ PAUSE'}</Text>
+          </Pressable>
         </View>
 
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>tape{'\n'}preview</Text>
-          <View style={styles.pills}>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>Trap</Text>
-            </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>Mix</Text>
-            </View>
-          </View>
-        </View>
-
-        <Pressable onPress={onDeckPress}>
+        <Pressable onPress={onTogglePlay}>
           <Deck
             width={deckWidth}
             spec={SPEC}
@@ -88,33 +81,24 @@ export default function App() {
           />
         </Pressable>
 
-        {wp.ready && (
-          <View style={styles.transport}>
-            <Pressable style={styles.tBtn} onPress={wp.controls.prev}>
-              <Text style={styles.tBtnText}>⏮</Text>
-            </Pressable>
-            <Pressable style={styles.tBtnPlay} onPress={wp.controls.toggle}>
-              <Text style={styles.tBtnPlayText}>{state.isPlaying ? '❚❚' : '▶'}</Text>
-            </Pressable>
-            <Pressable style={styles.tBtn} onPress={wp.controls.next}>
-              <Text style={styles.tBtnText}>⏭</Text>
-            </Pressable>
-          </View>
-        )}
-
-        <View style={styles.tapeRow}>
-          <Text style={styles.tapeStatus} numberOfLines={1}>
-            {statusText}
-          </Text>
-        </View>
-
         <View style={styles.buttonsRow}>
           {auth.isAuthed ? (
-            <Pressable style={styles.ghostBtn} onPress={auth.logout}>
+            <Pressable
+              style={styles.ghostBtn}
+              onPress={auth.logout}
+              accessibilityRole="button"
+              accessibilityLabel="Disconnect Spotify"
+            >
               <Text style={styles.ghostBtnText}>spotify ✓</Text>
             </Pressable>
           ) : (
-            <Pressable style={styles.spotifyBtn} onPress={auth.login} disabled={!auth.canPrompt}>
+            <Pressable
+              style={styles.spotifyBtn}
+              onPress={auth.login}
+              disabled={!auth.canPrompt}
+              accessibilityRole="button"
+              accessibilityLabel="Connect Spotify"
+            >
               <Text style={styles.spotifyBtnText}>connect spotify</Text>
             </Pressable>
           )}
@@ -148,46 +132,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 28,
   },
-  deckId: { color: '#D8D8D8', fontSize: 18, letterSpacing: 2, fontWeight: '600' },
+  deckId: {
+    flex: 1,
+    color: '#D8D8D8',
+    fontSize: 18,
+    letterSpacing: 1,
+    fontWeight: '600',
+    marginRight: 12,
+  },
   state: { color: '#888', fontSize: 12, letterSpacing: 1 },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  title: { color: '#F2F2F2', fontSize: 34, lineHeight: 36, fontWeight: '300', letterSpacing: 1 },
-  pills: { flexDirection: 'row', gap: 8 },
-  pill: {
-    borderColor: '#3A3A3A',
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-  },
-  pillText: { color: '#CFCFCF', fontSize: 13 },
-  transport: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 22,
-    marginTop: 18,
-  },
-  tBtn: { paddingHorizontal: 10, paddingVertical: 6 },
-  tBtnText: { color: '#CFCFCF', fontSize: 20 },
-  tBtnPlay: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderColor: '#E9E64B',
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tBtnPlayText: { color: '#E9E64B', fontSize: 18 },
-  tapeRow: { marginTop: 18 },
-  tapeStatus: { color: '#777', fontSize: 13, letterSpacing: 1 },
-  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
+  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
   spotifyBtn: {
     backgroundColor: '#1DB954',
     borderRadius: 18,
