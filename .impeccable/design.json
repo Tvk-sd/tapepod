@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-03T00:00:00.000Z",
+  "title": "Design System: Tapepod",
+  "extensions": {
+    "colorMeta": {
+      "void": {
+        "role": "neutral",
+        "displayName": "Void",
+        "canonical": "oklch(14% 0 0)",
+        "tonalRamp": [
+          "oklch(14% 0 0)",
+          "oklch(18% 0 0)",
+          "oklch(22% 0 0)",
+          "oklch(28% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(45% 0 0)",
+          "oklch(55% 0 0)",
+          "oklch(70% 0 0)"
+        ]
+      },
+      "accent-yellow": {
+        "role": "primary",
+        "displayName": "Signal Yellow",
+        "canonical": "oklch(88% 0.19 102)",
+        "tonalRamp": [
+          "oklch(45% 0.12 102)",
+          "oklch(55% 0.14 102)",
+          "oklch(65% 0.16 102)",
+          "oklch(75% 0.17 102)",
+          "oklch(82% 0.18 102)",
+          "oklch(88% 0.19 102)",
+          "oklch(92% 0.16 102)",
+          "oklch(96% 0.10 102)"
+        ]
+      },
+      "service-spotify": {
+        "role": "secondary",
+        "displayName": "Spotify Green",
+        "canonical": "oklch(65% 0.20 145)",
+        "tonalRamp": [
+          "oklch(25% 0.08 145)",
+          "oklch(35% 0.12 145)",
+          "oklch(45% 0.15 145)",
+          "oklch(55% 0.18 145)",
+          "oklch(65% 0.20 145)",
+          "oklch(72% 0.18 145)",
+          "oklch(80% 0.14 145)",
+          "oklch(90% 0.08 145)"
+        ]
+      },
+      "ink-header": {
+        "role": "neutral",
+        "displayName": "Ink Header",
+        "canonical": "oklch(87% 0 0)",
+        "tonalRamp": [
+          "oklch(20% 0 0)",
+          "oklch(30% 0 0)",
+          "oklch(40% 0 0)",
+          "oklch(50% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(80% 0 0)",
+          "oklch(87% 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Tape editor sheet title only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Now-playing header line; truncates on narrow widths."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Play/pause control, secondary list metadata."
+      },
+      "micro": {
+        "displayName": "Micro Label",
+        "purpose": "Uppercase section eyebrows; max one per sheet."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.25, 1, 0.5, 1)",
+        "purpose": "Default press opacity transitions (150–200ms)."
+      },
+      {
+        "name": "reel-spin",
+        "value": "continuous rotation tied to playback",
+        "purpose": "Deck reel ticks only; pause when prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      { "name": "frame-max", "value": "480px" },
+      { "name": "deck-max", "value": "460px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Add Tape Button",
+      "kind": "button",
+      "refersTo": "button-add-tape",
+      "description": "Primary native product action: load or edit tape.",
+      "html": "<button class=\"ds-btn-add-tape\" type=\"button\">edit tape</button>",
+      "css": ".ds-btn-add-tape { background: transparent; color: #E9E64B; border: 1px solid #E9E64B; border-radius: 18px; padding: 8px 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 400; letter-spacing: 1px; text-transform: lowercase; cursor: pointer; transition: opacity 0.15s cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-add-tape:hover { opacity: 0.85; } .ds-btn-add-tape:focus-visible { outline: 2px solid #E9E64B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Spotify Connect Button",
+      "kind": "button",
+      "refersTo": "button-spotify",
+      "description": "Filled CTA for Spotify OAuth only.",
+      "html": "<button class=\"ds-btn-spotify\" type=\"button\">connect spotify</button>",
+      "css": ".ds-btn-spotify { background: #1DB954; color: #0B0B0B; border: none; border-radius: 18px; padding: 8px 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; cursor: pointer; transition: opacity 0.15s cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-spotify:hover { opacity: 0.9; } .ds-btn-spotify:focus-visible { outline: 2px solid #1DB954; outline-offset: 2px; }"
+    },
+    {
+      "name": "Spotify Ghost Button",
+      "kind": "button",
+      "refersTo": "button-spotify-ghost",
+      "description": "Connected state; disconnect action.",
+      "html": "<button class=\"ds-btn-spotify-ghost\" type=\"button\">spotify ✓</button>",
+      "css": ".ds-btn-spotify-ghost { background: transparent; color: #1DB954; border: 1px solid #1DB954; border-radius: 18px; padding: 8px 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 400; letter-spacing: 1px; text-transform: lowercase; cursor: pointer; transition: opacity 0.15s cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-spotify-ghost:hover { opacity: 0.85; } .ds-btn-spotify-ghost:focus-visible { outline: 2px solid #1DB954; outline-offset: 2px; }"
+    },
+    {
+      "name": "Play Control",
+      "kind": "button",
+      "refersTo": "control-play",
+      "description": "Primary transport; text-only on void background.",
+      "html": "<button class=\"ds-control-play\" type=\"button\" aria-label=\"Play\">▶ PLAY</button>",
+      "css": ".ds-control-play { background: transparent; color: #ADADAD; border: none; padding: 8px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 1px; cursor: pointer; transition: opacity 0.15s cubic-bezier(0.25, 1, 0.5, 1); } .ds-control-play:hover { color: #D8D8D8; } .ds-control-play:focus-visible { outline: 2px solid #E9E64B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Tape Editor Row",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "Track row in tape editor with index, title, duration, action.",
+      "html": "<div class=\"ds-tape-row\"><span class=\"ds-tape-row__index\">01</span><div class=\"ds-tape-row__text\"><span class=\"ds-tape-row__title\">Track Title</span><span class=\"ds-tape-row__artist\">Artist Name</span></div><span class=\"ds-tape-row__dur\">3:42</span><span class=\"ds-tape-row__action\">✕</span></div>",
+      "css": ".ds-tape-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1C1C1C; font-family: system-ui, -apple-system, sans-serif; } .ds-tape-row__index { color: #E9E64B; font-size: 13px; width: 22px; } .ds-tape-row__text { flex: 1; min-width: 0; } .ds-tape-row__title { display: block; color: #EDEDED; font-size: 15px; } .ds-tape-row__artist { display: block; color: #777777; font-size: 12px; margin-top: 2px; } .ds-tape-row__dur { color: #888888; font-size: 13px; font-variant-numeric: tabular-nums; } .ds-tape-row__action { color: #E9E64B; font-size: 18px; width: 22px; text-align: center; }"
+    },
+    {
+      "name": "Tape Editor Sheet Header",
+      "kind": "custom",
+      "refersTo": "sheet-header",
+      "description": "Bottom sheet header with title, count, done action.",
+      "html": "<div class=\"ds-sheet-header\"><span class=\"ds-sheet-header__title\">tape</span><span class=\"ds-sheet-header__count\">3/20</span><button class=\"ds-sheet-header__done\" type=\"button\">done</button></div>",
+      "css": ".ds-sheet-header { display: flex; align-items: center; justify-content: space-between; font-family: system-ui, -apple-system, sans-serif; background: #101010; } .ds-sheet-header__title { color: #F2F2F2; font-size: 22px; font-weight: 300; letter-spacing: 1px; } .ds-sheet-header__count { color: #888888; font-size: 13px; letter-spacing: 1px; } .ds-sheet-header__done { background: transparent; border: none; color: #E9E64B; font-size: 15px; letter-spacing: 1px; cursor: pointer; padding: 8px; } .ds-sheet-header__done:focus-visible { outline: 2px solid #E9E64B; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Registration Mark Deck",
+    "overview": "Tapepod looks like a flat, head-on cassette mechanism drawn with registration marks and one signal color. The UI is near-black void; the deck is the hero; chrome is hardware labeling (lowercase, letter-spaced, no marketing voice). Density is calm: one column, max 480px frame, nothing competing with reel geometry.",
+    "keyCharacteristics": [
+      "Restrained palette: tinted neutrals on void plus yellow accent on ≤10% of any screen.",
+      "System typography only; weight and letter-spacing carry hierarchy.",
+      "Flat elevation via surface steps and 1px dividers, never drop shadows.",
+      "Primary product actions are yellow outline pills; filled buttons reserved for Spotify.",
+      "The Deck SVG owns motion and progress; surrounding UI stays static."
+    ],
+    "rules": [
+      {
+        "name": "The One Signal Rule",
+        "body": "Yellow appears on mechanism lines and one product action per screen. If yellow is on a card background, a gradient, and a button simultaneously, the screen is over-signaled.",
+        "section": "colors"
+      },
+      {
+        "name": "The Service Color Rule",
+        "body": "Green is Spotify's lane. Never use #1DB954 for Tapepod-native actions like load tape or play.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lowercase Voice Rule",
+        "body": "UI copy stays lowercase except transport state, section micro-labels, and proper nouns. No title-case marketing headings.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Time Rule",
+        "body": "Durations use tabular numerals so list columns stay aligned.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Ghost Card Rule",
+        "body": "Never combine border 1px solid with soft wide drop shadows on the same element. Pick a hairline border or a surface step, not both as decoration.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat Deck Rule",
+        "body": "The Deck SVG sits directly on void. Do not wrap it in a bordered card or panel.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the deck as the largest visual element on the player screen.",
+      "Do use yellow for mechanism lines and one native product action per view.",
+      "Do use #ADADAD or lighter for essential control text on #0B0B0B (AAA ≥7:1).",
+      "Do use 44pt minimum touch targets on all pressables (hitSlop where visual size is smaller).",
+      "Do label pressables for VoiceOver (Play, Pause, Connect Spotify, Disconnect Spotify)."
+    ],
+    "donts": [
+      "Don't use SaaS dashboard patterns: card grids, gradient accents, hero metrics, eyebrow kickers, ghost-card borders with wide drop shadows, modal-first flows for simple tasks.",
+      "Don't clone generic streaming app chrome (album art hero, gradient player backgrounds, shuffle row of circular icons).",
+      "Don't use #888888 for play/pause or other essential controls on void; it fails AAA.",
+      "Don't add drop shadows to pills, sheets, or the deck wrapper.",
+      "Don't use yellow as a full-screen or large-panel fill; it is a signal stroke, not a surface.",
+      "Don't nest cards or add side-stripe accent borders on list rows.",
+      "Don't use uppercase body copy beyond micro section labels and transport state."
+    ]
+  }
+}

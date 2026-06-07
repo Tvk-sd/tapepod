@@ -19,11 +19,23 @@ import { useTape } from './src/tape-curation/useTape';
 import { totalDuration } from './src/tape-curation/tape';
 import TapeEditor from './src/tape-curation/TapeEditor';
 import { MOCK_CATALOG } from './src/catalog/mockCatalog';
+import { colors, layout, motion, radius, spacing } from './src/theme/tokens';
 
 const SPEC: DeckSpec = { hubRadius: 72, maxRadius: 150 };
 
 const previewSeconds = (totalSec: number): number =>
   totalSec === 0 ? 30 : Math.max(10, Math.min(90, totalSec / 8));
+
+const focusRing = (color: string) =>
+  Platform.select({
+    web: {
+      outlineStyle: 'solid' as const,
+      outlineWidth: 2,
+      outlineColor: color,
+      outlineOffset: 2,
+    },
+    default: {},
+  });
 
 export default function App() {
   const { width } = useWindowDimensions();
@@ -33,7 +45,6 @@ export default function App() {
   const wp = useWebPlayback(auth.isAuthed, auth.getAccessToken);
   const [editing, setEditing] = useState(false);
 
-  // Source switch: SDK player (control, web) > Spotify mirror (read) > mock.
   const source = useMemo(() => {
     if (auth.isAuthed && web && wp.ready) return wp.source;
     if (auth.isAuthed) return createSpotifySource(auth.getAccessToken);
@@ -44,8 +55,9 @@ export default function App() {
 
   const onTogglePlay = () => (wp.ready ? wp.controls.toggle() : toggle());
 
-  const deckWidth = Math.min(width - 32, 460);
+  const deckWidth = Math.min(width - spacing.frameX * 2, layout.deckMax);
   const loaded = tape.tracks.length > 0;
+  const playLabel = state.isPlaying ? '❚❚ PAUSE' : '▶ PLAY';
 
   const nowPlayingLabel =
     state.trackArtist && state.trackTitle
@@ -58,20 +70,29 @@ export default function App() {
     <View style={styles.screen}>
       <View style={styles.frame}>
         <View style={styles.headerRow}>
-          <Text style={styles.deckId} numberOfLines={1}>
+          <Text style={styles.deckId} numberOfLines={1} accessibilityRole="header">
             {nowPlayingLabel}
           </Text>
           <Pressable
             onPress={onTogglePlay}
-            hitSlop={8}
+            style={({ pressed, focused }) => [
+              styles.playControl,
+              pressed && styles.pressed,
+              focused && focusRing(colors.accentYellow),
+            ]}
             accessibilityRole="button"
             accessibilityLabel={state.isPlaying ? 'Pause' : 'Play'}
           >
-            <Text style={styles.state}>{state.isPlaying ? '▶ PLAY' : '❚❚ PAUSE'}</Text>
+            <Text style={styles.state}>{playLabel}</Text>
           </Pressable>
         </View>
 
-        <Pressable onPress={onTogglePlay}>
+        <Pressable
+          onPress={onTogglePlay}
+          style={({ pressed }) => [pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Toggle playback"
+        >
           <Deck
             width={deckWidth}
             spec={SPEC}
@@ -84,7 +105,11 @@ export default function App() {
         <View style={styles.buttonsRow}>
           {auth.isAuthed ? (
             <Pressable
-              style={styles.ghostBtn}
+              style={({ pressed, focused }) => [
+                styles.ghostBtn,
+                pressed && styles.pressed,
+                focused && focusRing(colors.serviceSpotify),
+              ]}
               onPress={auth.logout}
               accessibilityRole="button"
               accessibilityLabel="Disconnect Spotify"
@@ -93,16 +118,31 @@ export default function App() {
             </Pressable>
           ) : (
             <Pressable
-              style={styles.spotifyBtn}
+              style={({ pressed, focused, disabled }) => [
+                styles.spotifyBtn,
+                disabled && styles.disabled,
+                pressed && !disabled && styles.pressed,
+                focused && focusRing(colors.serviceSpotify),
+              ]}
               onPress={auth.login}
               disabled={!auth.canPrompt}
               accessibilityRole="button"
               accessibilityLabel="Connect Spotify"
+              accessibilityState={{ disabled: !auth.canPrompt }}
             >
               <Text style={styles.spotifyBtnText}>connect spotify</Text>
             </Pressable>
           )}
-          <Pressable style={styles.addBtn} onPress={() => setEditing(true)}>
+          <Pressable
+            style={({ pressed, focused }) => [
+              styles.addBtn,
+              pressed && styles.pressed,
+              focused && focusRing(colors.accentYellow),
+            ]}
+            onPress={() => setEditing(true)}
+            accessibilityRole="button"
+            accessibilityLabel={loaded ? 'Edit tape' : 'Add songs'}
+          >
             <Text style={styles.addBtnText}>{loaded ? 'edit tape' : '+ add songs'}</Text>
           </Pressable>
         </View>
@@ -124,45 +164,74 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0B0B0B', alignItems: 'center', justifyContent: 'center' },
-  frame: { width: '100%', maxWidth: 480, paddingHorizontal: 16 },
+  screen: {
+    flex: 1,
+    backgroundColor: colors.void,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  frame: { width: '100%', maxWidth: layout.frameMax, paddingHorizontal: spacing.frameX },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: spacing.section,
   },
   deckId: {
     flex: 1,
-    color: '#D8D8D8',
+    color: colors.inkHeader,
     fontSize: 18,
     letterSpacing: 1,
     fontWeight: '600',
-    marginRight: 12,
+    marginRight: spacing.stack - 6,
   },
-  state: { color: '#888', fontSize: 12, letterSpacing: 1 },
-  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
+  playControl: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  state: { color: colors.inkControl, fontSize: 12, letterSpacing: 1 },
+  pressed: { opacity: motion.pressOpacity },
+  disabled: { opacity: motion.disabledOpacity },
+  buttonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.stack,
+    gap: spacing.stack - 6,
+  },
   spotifyBtn: {
-    backgroundColor: '#1DB954',
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    backgroundColor: colors.serviceSpotify,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.btnX,
+    paddingVertical: spacing.btnY,
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  spotifyBtnText: { color: '#0B0B0B', fontSize: 14, letterSpacing: 1, fontWeight: '600' },
+  spotifyBtnText: {
+    color: colors.void,
+    fontSize: 14,
+    letterSpacing: 1,
+    fontWeight: '600',
+  },
   ghostBtn: {
-    borderColor: '#1DB954',
+    borderColor: colors.serviceSpotify,
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.btnX,
+    paddingVertical: spacing.btnY,
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  ghostBtnText: { color: '#1DB954', fontSize: 14, letterSpacing: 1 },
+  ghostBtnText: { color: colors.serviceSpotify, fontSize: 14, letterSpacing: 1 },
   addBtn: {
-    borderColor: '#E9E64B',
+    borderColor: colors.accentYellow,
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.btnX,
+    paddingVertical: spacing.btnY,
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  addBtnText: { color: '#E9E64B', fontSize: 14, letterSpacing: 1 },
+  addBtnText: { color: colors.accentYellow, fontSize: 14, letterSpacing: 1 },
 });
