@@ -1,5 +1,9 @@
 # Tapepod — Project Tracker
 
+> ⏸ **PAUSED 2026-06-24** — see `HANDOFF.md`. Loose ends: commit `91f7012` is
+> unpushed (`main` ahead of origin by 1); cassette visual rework parked in
+> `git stash` (`stash@{0}`).
+
 ## Status: 2D Deck MVP — first visual milestone shipped ✅
 
 A flat 2D line-art cassette **Deck** renders and animates on web (localhost),
